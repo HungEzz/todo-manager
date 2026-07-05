@@ -1,3 +1,4 @@
+import { Prisma, TaskStatus } from "@prisma/client";
 import prisma from "../lib/prisma";
 
 /**
@@ -12,3 +13,57 @@ export const createTask = async (data: { title: string; description?: string }) 
     },
   });
 };
+
+/**
+ * Retrieves list of tasks with pagination, filtering, and search.
+ */
+export const getTasks = async (params: {
+  status?: TaskStatus;
+  keyword?: string;
+  page: number;
+  limit: number;
+  sortBy: "createdAt" | "title";
+  order: "asc" | "desc";
+}) => {
+  const { status, keyword, page, limit, sortBy, order } = params;
+
+  const where: Prisma.TaskWhereInput = {};
+
+  if (status) {
+    where.status = status;
+  }
+
+  if (keyword) {
+    where.title = {
+      contains: keyword,
+      mode: "insensitive",
+    };
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [tasks, total] = await Promise.all([
+    prisma.task.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: {
+        [sortBy]: order,
+      },
+    }),
+    prisma.task.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    tasks,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  };
+};
+
