@@ -1,5 +1,6 @@
 import express from "express";
 import healthRouter from "./routes/health.route";
+import taskRouter from "./routes/task.route";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -9,6 +10,7 @@ app.use(express.json());
 
 // Routes
 app.use("/", healthRouter);
+app.use("/api", taskRouter);
 
 // Start server
 app.listen(PORT, () => {
