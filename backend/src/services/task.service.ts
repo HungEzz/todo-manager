@@ -77,4 +77,25 @@ export const getTaskById = async (id: number) => {
   });
 };
 
+/**
+ * Updates an existing task with optional new title and description.
+ * @param id The ID of the task.
+ * @param data Object containing optional title and description.
+ */
+export const updateTask = async (id: number, data: { title?: string; description?: string }) => {
+  const existing = await prisma.task.findUnique({
+    where: { id },
+  });
+  
+  if (!existing) {
+    return null;
+  }
+
+  return await prisma.task.update({
+    where: { id },
+    data,
+  });
+};
+
+
 
