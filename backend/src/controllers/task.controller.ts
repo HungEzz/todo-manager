@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { TaskStatus } from "@prisma/client";
 import * as taskService from "../services/task.service";
@@ -61,7 +61,7 @@ const getTasksQuerySchema = z.object({
 /**
  * Controller to handle task creation.
  */
-export const createTask = async (req: Request, res: Response) => {
+export const createTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parseResult = createTaskSchema.safeParse(req.body);
     
@@ -75,15 +75,14 @@ export const createTask = async (req: Request, res: Response) => {
     const newTask = await taskService.createTask(parseResult.data);
     return res.status(201).json(newTask);
   } catch (error) {
-    console.error("Error creating task:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 /**
  * Controller to handle task retrieval.
  */
-export const getTasks = async (req: Request, res: Response) => {
+export const getTasks = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parseResult = getTasksQuerySchema.safeParse(req.query);
 
@@ -100,15 +99,14 @@ export const getTasks = async (req: Request, res: Response) => {
       pagination: result.pagination,
     });
   } catch (error) {
-    console.error("Error retrieving tasks:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 /**
  * Controller to handle retrieving a single task by ID.
  */
-export const getTask = async (req: Request, res: Response) => {
+export const getTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const parsedId = Number(id);
@@ -131,15 +129,14 @@ export const getTask = async (req: Request, res: Response) => {
 
     return res.status(200).json(task);
   } catch (error) {
-    console.error("Error retrieving task:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 /**
  * Controller to handle task update.
  */
-export const updateTask = async (req: Request, res: Response) => {
+export const updateTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const parsedId = Number(id);
@@ -170,15 +167,14 @@ export const updateTask = async (req: Request, res: Response) => {
 
     return res.status(200).json(updatedTask);
   } catch (error) {
-    console.error("Error updating task:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 /**
  * Controller to handle task status update.
  */
-export const updateTaskStatus = async (req: Request, res: Response) => {
+export const updateTaskStatus = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const parsedId = Number(id);
@@ -209,15 +205,14 @@ export const updateTaskStatus = async (req: Request, res: Response) => {
 
     return res.status(200).json(updatedTask);
   } catch (error) {
-    console.error("Error updating task status:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
 /**
  * Controller to handle task deletion.
  */
-export const deleteTask = async (req: Request, res: Response) => {
+export const deleteTask = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const parsedId = Number(id);
@@ -242,8 +237,7 @@ export const deleteTask = async (req: Request, res: Response) => {
       message: `Task with ID ${parsedId} has been successfully deleted`,
     });
   } catch (error) {
-    console.error("Error deleting task:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
