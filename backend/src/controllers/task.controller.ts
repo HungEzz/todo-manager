@@ -214,6 +214,40 @@ export const updateTaskStatus = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Controller to handle task deletion.
+ */
+export const deleteTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const parsedId = Number(id);
+
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      return res.status(400).json({
+        error: "Invalid ID",
+        message: "Task ID must be a valid positive integer",
+      });
+    }
+
+    const deletedTask = await taskService.deleteTask(parsedId);
+
+    if (!deletedTask) {
+      return res.status(404).json({
+        error: "Not Found",
+        message: `Task with ID ${parsedId} not found`,
+      });
+    }
+
+    return res.status(200).json({
+      message: `Task with ID ${parsedId} has been successfully deleted`,
+    });
+  } catch (error) {
+    console.error("Error deleting task:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
 
 
 

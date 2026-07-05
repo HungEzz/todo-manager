@@ -117,5 +117,23 @@ export const updateTaskStatus = async (id: number, status: TaskStatus) => {
   });
 };
 
+/**
+ * Deletes a task by its ID.
+ * @param id The ID of the task.
+ */
+export const deleteTask = async (id: number) => {
+  const existing = await prisma.task.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  return await prisma.task.delete({
+    where: { id },
+  });
+};
+
 
 
