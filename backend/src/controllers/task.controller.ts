@@ -87,3 +87,35 @@ export const getTasks = async (req: Request, res: Response) => {
   }
 };
 
+/**
+ * Controller to handle retrieving a single task by ID.
+ */
+export const getTask = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const parsedId = Number(id);
+
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      return res.status(400).json({
+        error: "Invalid ID",
+        message: "Task ID must be a valid positive integer",
+      });
+    }
+
+    const task = await taskService.getTaskById(parsedId);
+
+    if (!task) {
+      return res.status(404).json({
+        error: "Not Found",
+        message: `Task with ID ${parsedId} not found`,
+      });
+    }
+
+    return res.status(200).json(task);
+  } catch (error) {
+    console.error("Error retrieving task:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+

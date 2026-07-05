@@ -67,3 +67,14 @@ export const getTasks = async (params: {
   };
 };
 
+/**
+ * Retrieves a single task by its ID.
+ * @param id The ID of the task.
+ */
+export const getTaskById = async (id: number) => {
+  return await prisma.task.findUnique({
+    where: { id },
+  });
+};
+
+
