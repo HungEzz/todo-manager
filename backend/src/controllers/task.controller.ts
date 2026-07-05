@@ -24,6 +24,13 @@ const updateTaskSchema = z.object({
   description: z.string().optional(),
 });
 
+// Zod schema for validating task status update request
+const updateTaskStatusSchema = z.object({
+  status: z.enum(["TODO", "DONE"], {
+    message: "Status must be either 'TODO' or 'DONE'",
+  }),
+});
+
 // Helper for validating positive integer string parameters
 const positiveIntStringSchema = (defaultValue: number, name: string) =>
   z
@@ -167,6 +174,46 @@ export const updateTask = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+/**
+ * Controller to handle task status update.
+ */
+export const updateTaskStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const parsedId = Number(id);
+
+    if (isNaN(parsedId) || !Number.isInteger(parsedId) || parsedId <= 0) {
+      return res.status(400).json({
+        error: "Invalid ID",
+        message: "Task ID must be a valid positive integer",
+      });
+    }
+
+    const parseResult = updateTaskStatusSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({
+        error: "Validation failed",
+        details: parseResult.error.flatten().fieldErrors,
+      });
+    }
+
+    const updatedTask = await taskService.updateTaskStatus(parsedId, parseResult.data.status);
+
+    if (!updatedTask) {
+      return res.status(404).json({
+        error: "Not Found",
+        message: `Task with ID ${parsedId} not found`,
+      });
+    }
+
+    return res.status(200).json(updatedTask);
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 
 

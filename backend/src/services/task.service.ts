@@ -97,5 +97,25 @@ export const updateTask = async (id: number, data: { title?: string; description
   });
 };
 
+/**
+ * Updates the status of an existing task.
+ * @param id The ID of the task.
+ * @param status The new status of the task.
+ */
+export const updateTaskStatus = async (id: number, status: TaskStatus) => {
+  const existing = await prisma.task.findUnique({
+    where: { id },
+  });
+
+  if (!existing) {
+    return null;
+  }
+
+  return await prisma.task.update({
+    where: { id },
+    data: { status },
+  });
+};
+
 
 
