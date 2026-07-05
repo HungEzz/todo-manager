@@ -6,6 +6,9 @@ import prisma from "../lib/prisma";
  * @param data Object containing title and optional description.
  */
 export const createTask = async (data: { title: string; description?: string }) => {
+  if (!data.title || data.title.trim() === "") {
+    throw new Error("Title is required and cannot be empty");
+  }
   return await prisma.task.create({
     data: {
       title: data.title,
