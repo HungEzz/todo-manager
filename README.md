@@ -31,13 +31,13 @@ The application is structured as a monorepo consisting of two primary directorie
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend** | React, Next.js (App Router), TypeScript, Tailwind CSS |
-| **Backend** | Node.js, Express, TypeScript, Zod (Validation), CORS |
-| **Database** | PostgreSQL, Prisma ORM |
-| **Testing** | Jest, ts-jest (Backend Unit Tests) |
-| **Containerization** | Docker, Docker Compose |
+| Layer                | Technology                                            |
+| :------------------- | :---------------------------------------------------- |
+| **Frontend**         | React, Next.js (App Router), TypeScript, Tailwind CSS |
+| **Backend**          | Node.js, Express, TypeScript, Zod (Validation), CORS  |
+| **Database**         | PostgreSQL, Prisma ORM                                |
+| **Testing**          | Jest, ts-jest (Backend Unit Tests)                    |
+| **Containerization** | Docker, Docker Compose                                |
 
 ---
 
@@ -73,6 +73,7 @@ todo-manager/
 Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/HungEzz/todo-manager.git
    cd todo-manager
@@ -80,6 +81,7 @@ Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://d
 
 2. **Run with Docker Compose**:
    To start the database, backend API, and frontend client concurrently:
+
    ```bash
    docker compose up --build
    ```
@@ -103,7 +105,7 @@ Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://d
      cd backend
      cp .env.example .env
      ```
-     *Edit the `.env` file:*
+     _Edit the `.env` file:_
      ```env
      DATABASE_URL="postgresql://<username>:<password>@localhost:5432/<database_name>?schema=public"
      PORT=3001
@@ -113,12 +115,13 @@ Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://d
      cd ../frontend
      cp .env.local.example .env.local
      ```
-     *Edit the `.env.local` file:*
+     _Edit the `.env.local` file:_
      ```env
      NEXT_PUBLIC_API_URL=http://localhost:3001/api
      ```
 
    **Step B: Start Backend API**
+
    ```bash
    cd ../backend
    npm install
@@ -127,6 +130,7 @@ Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://d
    ```
 
    **Step C: Start Frontend Client**
+
    ```bash
    cd ../frontend
    npm install
@@ -134,6 +138,7 @@ Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://d
    ```
 
 For detailed local development instructions, see the sub-project guides:
+
 - [Frontend Development Guide](./frontend/README.md)
 - [Backend Development Guide](./backend/README.md)
 
@@ -142,10 +147,31 @@ For detailed local development instructions, see the sub-project guides:
 ## 📸 Screenshots
 
 ### Desktop View
-![Desktop Dashboard](./docs/screenshots/desktop-view.png)  
+
+![Desktop Dashboard](./docs/screenshots/desktop-view.png)
 
 ### Mobile View
-![Mobile Dashboard](./docs/screenshots/mobile-view.png)  
+
+![Mobile Dashboard](./docs/screenshots/mobile-view.png)
+
+---
+
+## 🌐 Deployment & Keep-Alive (Render & Vercel)
+
+The application is configured to be deployed as follows:
+
+- **Frontend**: Hosted on [Vercel](https://vercel.com)
+- **Backend API**: Hosted on [Render](https://render.com) (Free Web Service)
+- **Database**: Hosted on [Supabase](https://supabase.com) (PostgreSQL)
+
+### ☕ Dealing with Render's Cold Start (Free Tier):
+
+Render's free-tier hosting automatically spins down (goes to sleep) after 15 minutes of inactivity. When a user visits the application for the first time, it can take up to 50 seconds for the backend to wake up, causing the loading animation to hang.
+
+To solve this and guarantee a premium review experience:
+
+1. **Frontend Warning Banner**: If the API server takes more than 4 seconds to respond, the frontend application will automatically display an informative warning banner informing the reviewer that the backend server is waking up.
+2. **Keep-Alive Cron Job**: Set up a free pinging service (e.g., [Cron-Job.org](https://cron-job.org/) or [UptimeRobot](https://uptimerobot.com/)) to query the backend health check endpoint (`https://<your-render-url>/health`) every **14 minutes**. This prevents the server from sleeping, keeping it awake 24/7.
 
 ---
 

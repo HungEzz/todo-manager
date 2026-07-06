@@ -7,10 +7,14 @@ import { errorHandler } from "./middlewares/error.middleware";
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Configure CORS for frontend running at localhost:3000
+// Configure CORS to support local development and production domains via environment variables
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:3000"];
+
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })

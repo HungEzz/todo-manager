@@ -46,6 +46,20 @@ export default function Home() {
 
   const [reloadTrigger, setReloadTrigger] = useState(0);
   const [silentReload, setSilentReload] = useState(false);
+  const [showColdStartWarning, setShowColdStartWarning] = useState(false);
+
+  // Show cold start warning banner if loading takes more than 4 seconds
+  useEffect(() => {
+    let warningTimer: NodeJS.Timeout;
+    if (loading && !silentReload) {
+      warningTimer = setTimeout(() => {
+        setShowColdStartWarning(true);
+      }, 4000);
+    } else {
+      setShowColdStartWarning(false);
+    }
+    return () => clearTimeout(warningTimer);
+  }, [loading, silentReload]);
 
   // Debounce effect for search input
   useEffect(() => {
@@ -193,6 +207,15 @@ export default function Home() {
               Today is {getFormattedDate()}
             </p>
           </div>
+
+          {/* Render cold start warning if API loading is slow */}
+          {showColdStartWarning && (
+            <div className="p-3 text-xs font-semibold rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 flex items-center gap-2.5 animate-pulse select-none">
+              <span className="text-sm">☕</span>
+              <span>API server is waking up (Render Free Tier). Please wait up to 50 seconds for the first load...</span>
+            </div>
+          )}
+
         {/* Stats Category Grid */}
         <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
           {/* Active Tasks Card */}
