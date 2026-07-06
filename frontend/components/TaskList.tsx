@@ -10,9 +10,18 @@ interface TaskListProps {
   onRetry: () => void;
   onTaskUpdated: (task: Task) => void;
   onTaskDeleted: (id: number) => void;
+  isFiltered?: boolean;
 }
 
-export default function TaskList({ tasks, loading, error, onRetry, onTaskUpdated, onTaskDeleted }: TaskListProps) {
+export default function TaskList({
+  tasks,
+  loading,
+  error,
+  onRetry,
+  onTaskUpdated,
+  onTaskDeleted,
+  isFiltered = false,
+}: TaskListProps) {
   if (loading) {
     return (
       <div className="space-y-3">
@@ -86,9 +95,13 @@ export default function TaskList({ tasks, loading, error, onRetry, onTaskUpdated
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-bold text-zinc-200">No tasks found</h3>
+          <h3 className="text-lg font-bold text-zinc-200">
+            {isFiltered ? "No matching tasks found" : "No tasks found"}
+          </h3>
           <p className="text-sm text-zinc-400 mt-1 max-w-xs">
-            Your task list is empty. Add a new task to get started!
+            {isFiltered
+              ? "No tasks match your current search or filter. Try adjusting them!"
+              : "Your task list is empty. Add a new task to get started!"}
           </p>
         </div>
       </div>
