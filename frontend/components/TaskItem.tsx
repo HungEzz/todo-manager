@@ -97,16 +97,12 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
       updatedAt: new Date().toISOString(),
     };
 
-    // 1. Optimistic Update (Immediate UI response)
     onTaskUpdated(optimisticTask);
 
     try {
-      // 2. Call API
       const actualUpdatedTask = await toggleTaskStatus(task.id, task.status);
-      // 3. Sync with server data
       onTaskUpdated(actualUpdatedTask);
     } catch (err) {
-      // 4. Revert UI and show error on failure
       const errorMessage = err instanceof Error ? err.message : "Failed to update task status. Please try again.";
       setSubmitError(errorMessage);
       onTaskUpdated(originalTask);

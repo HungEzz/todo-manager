@@ -60,10 +60,8 @@ export default function TaskForm({ onTaskCreated }: TaskFormProps) {
       setDueDate("");
       setTitleError(null);
       
-      // Notify parent to append the task
       onTaskCreated(newTask);
     } catch (err) {
-      // API error - retain user input, show error message
       const errorMessage = err instanceof Error ? err.message : "Failed to create a new task. Please try again.";
       setSubmitError(errorMessage);
     } finally {
