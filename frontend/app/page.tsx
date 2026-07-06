@@ -143,9 +143,9 @@ export default function Home() {
   const doneCount = globalStats.done;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start lg:justify-center py-0 lg:py-10 px-0 lg:px-4">
+    <main className="flex min-h-screen flex-col items-center justify-start lg:justify-center py-0 lg:py-5 px-0 lg:px-4">
       {/* Responsive layout */}
-      <div className="w-full max-w-full sm:max-w-[480px] md:max-w-[520px] lg:max-w-[960px] xl:max-w-[1024px] bg-white rounded-none sm:rounded-[32px] shadow-none sm:shadow-xl sm:shadow-ink/5 border-0 sm:border border-border/60 flex flex-col lg:flex-row h-screen sm:h-[680px] lg:h-[720px] relative overflow-hidden">
+      <div className="w-full max-w-full sm:max-w-[480px] md:max-w-[520px] lg:max-w-[960px] xl:max-w-[1024px] bg-white rounded-none sm:rounded-[32px] shadow-none sm:shadow-xl sm:shadow-ink/5 border-0 sm:border border-border/60 flex flex-col lg:flex-row h-screen sm:h-[600px] lg:h-[640px] relative overflow-hidden">
         {/* Left Column: Sidebar */}
         <div className="flex flex-col lg:w-[250px] lg:flex-shrink-0 bg-white lg:bg-[#F8FAFC] p-4 sm:p-6 lg:p-8 border-b lg:border-b-0 lg:border-r border-border/50 justify-between lg:h-full">
           <div className="space-y-6">
@@ -197,7 +197,7 @@ export default function Home() {
         </div>
 
         {/* Right Column */}
-        <div className="flex-1 min-w-0 flex flex-col p-4 sm:p-6 lg:p-8 space-y-5 lg:space-y-6 h-full overflow-hidden bg-white">
+        <div className="flex-1 min-w-0 flex flex-col p-4 sm:p-5 lg:p-6 space-y-4 lg:space-y-5 h-full overflow-hidden bg-white">
           {/* Desktop Main Page Title */}
           <div className="hidden lg:block space-y-0.5 pb-1 select-none">
             <h1 className="text-3xl font-extrabold tracking-tight text-ink font-body leading-none">
