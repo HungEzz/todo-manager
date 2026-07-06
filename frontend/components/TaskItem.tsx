@@ -14,8 +14,21 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const toLocalISO = (dateStr: string | null) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().slice(0, 16);
+    } catch (e) {
+      return "";
+    }
+  };
+
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description || "");
+  const [editDueDate, setEditDueDate] = useState(toLocalISO(task.dueDate));
 
   const [titleError, setTitleError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -41,6 +54,7 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
       const updatedTask = await updateTask(task.id, {
         title: editTitle.trim(),
         description: editDescription.trim() || undefined,
+        dueDate: editDueDate ? new Date(editDueDate).toISOString() : null,
       });
 
       onTaskUpdated(updatedTask);
@@ -88,7 +102,7 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
 
     try {
       // 2. Call API
-      const actualUpdatedTask = await toggleTaskStatus(task.id);
+      const actualUpdatedTask = await toggleTaskStatus(task.id, task.status);
       // 3. Sync with server data
       onTaskUpdated(actualUpdatedTask);
     } catch (err) {
@@ -101,20 +115,41 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
     }
   };
 
+  const formatTime = (dateStr: string) => {
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) {
+      return "12:00 PM";
+    }
+  };
+
+  const formatDueDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   if (isEditing) {
     return (
       <form
         onSubmit={handleUpdate}
-        className="p-4 rounded-xl border border-indigo-500/50 bg-zinc-900/50 backdrop-blur-sm space-y-3"
+        className="p-3 bg-surface/50 border border-border/60 rounded-2xl space-y-2"
       >
         {submitError && (
-          <div className="p-2.5 text-xs rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+          <div className="p-2.5 text-xs rounded-lg border-l-4 border-error bg-error-bg text-error">
             {submitError}
           </div>
         )}
 
         <div className="space-y-1">
+          <label htmlFor="edit-title" className="sr-only">Edit title</label>
           <input
+            id="edit-title"
             type="text"
             value={editTitle}
             onChange={(e) => {
@@ -129,147 +164,191 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
               }
             }}
             placeholder="Task title..."
-            className={`w-full px-3 py-1.5 text-sm rounded-lg border bg-zinc-950/60 text-white placeholder-zinc-600 focus:outline-none transition-all ${
+            className={`w-full px-2.5 py-1 text-xs rounded-lg border bg-white text-ink placeholder-muted focus:outline-none transition-all ${
               titleError
-                ? "border-red-500/50 focus:border-red-500"
-                : "border-zinc-800 focus:border-indigo-500"
+                ? "border-error focus:border-error"
+                : "border-border focus:border-primary"
             }`}
           />
           {titleError && (
-            <p className="text-xs text-red-400 font-medium">{titleError}</p>
+            <p className="text-[10px] text-error font-medium">{titleError}</p>
           )}
         </div>
 
-        <textarea
-          value={editDescription}
-          onChange={(e) => setEditDescription(e.target.value)}
-          placeholder="Task description (optional)..."
-          rows={2}
-          className="w-full px-3 py-1.5 text-xs rounded-lg border border-zinc-800 bg-zinc-950/60 text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition-all resize-none"
-        />
+        <div className="space-y-1">
+          <label htmlFor="edit-description" className="sr-only">Edit description</label>
+          <textarea
+            id="edit-description"
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Edit description (optional)..."
+            rows={2}
+            className="w-full px-2.5 py-1 text-xs rounded-lg border border-border bg-white text-ink placeholder-muted focus:outline-none focus:border-primary transition-all resize-none"
+          />
+        </div>
 
-        <div className="flex justify-end space-x-2 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => {
-              setIsEditing(false);
-              setEditTitle(task.title);
-              setEditDescription(task.description || "");
-              setTitleError(null);
-              setSubmitError(null);
-            }}
-            disabled={submitting}
-            className="px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-950/20 text-zinc-400 hover:text-white hover:border-zinc-700 transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={submitting || !!titleError || editTitle.trim() === ""}
-            className="px-3 py-1.5 rounded-lg text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] transition-all"
-          >
-            {submitting ? "Saving..." : "Save"}
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <div className="flex-1 flex items-center gap-1.5">
+            <span className="text-muted text-[10px] font-bold select-none">Due:</span>
+            <input
+              id="edit-dueDate"
+              type="datetime-local"
+              value={editDueDate}
+              onChange={(e) => setEditDueDate(e.target.value)}
+              className="flex-1 px-2.5 py-1 text-xs rounded-lg border border-border bg-white text-ink focus:outline-none focus:border-primary transition-all"
+            />
+          </div>
+
+          <div className="flex justify-end gap-1.5 text-[11px] font-bold">
+            <button
+              type="button"
+              onClick={() => {
+                setIsEditing(false);
+                setEditTitle(task.title);
+                setEditDescription(task.description || "");
+                setEditDueDate(toLocalISO(task.dueDate));
+                setTitleError(null);
+                setSubmitError(null);
+              }}
+              disabled={submitting}
+              className="px-2.5 py-1 rounded-lg border border-border bg-white text-muted hover:text-ink transition-all disabled:opacity-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting || !!titleError || editTitle.trim() === ""}
+              className="px-3.5 py-1 rounded-lg text-white bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] transition-all cursor-pointer"
+            >
+              {submitting ? "..." : "Save"}
+            </button>
+          </div>
         </div>
       </form>
     );
   }
 
   return (
-    <div className="flex flex-col p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm hover:border-zinc-700 transition-all duration-200 space-y-2">
+    <div className="flex flex-col p-4 bg-white border border-border/80 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 space-y-2.5">
       {submitError && (
-        <div className="p-2.5 text-xs rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex justify-between items-center">
+        <div className="p-2.5 text-xs rounded-lg bg-error-bg border-l-4 border-error text-error flex justify-between items-center">
           <span>{submitError}</span>
           <button
             onClick={() => setSubmitError(null)}
-            className="text-red-400 hover:text-white font-bold ml-2 transition-colors"
+            className="text-error hover:text-ink font-bold ml-2 transition-colors cursor-pointer"
           >
             ×
           </button>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3 min-w-0">
-          <button
-            onClick={handleToggleStatus}
-            disabled={toggling || isConfirmingDelete}
-            title={isDone ? "Mark as TODO" : "Mark as DONE"}
-            className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
-              isDone
-                ? "bg-green-500/20 border-green-500 text-green-400 shadow-lg shadow-green-500/20"
-                : "border-zinc-700 bg-zinc-950/40 text-transparent hover:border-zinc-500"
-            } active:scale-90 disabled:opacity-50`}
-          >
-            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          </button>
-          <div className="min-w-0">
-            <p
-              className={`text-sm font-semibold truncate ${
-                isDone ? "text-zinc-500 line-through font-normal" : "text-zinc-100"
+      {/* Main card row: Checkbox and content wrapper */}
+      <div className="flex items-start gap-3">
+        {/* Checkbox button */}
+        <button
+          onClick={handleToggleStatus}
+          disabled={toggling || isConfirmingDelete}
+          title={isDone ? "Mark as TODO" : "Mark as DONE"}
+          className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all cursor-pointer mt-0.5 ${
+            isDone
+              ? "bg-primary border-primary text-white"
+              : "border-slate-300 bg-white text-transparent hover:border-primary hover:bg-primary/5"
+          } active:scale-90 disabled:opacity-50`}
+        >
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </button>
+
+        {/* Content & responsive actions block */}
+        <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          {/* Title and Description */}
+          <div className="min-w-0 flex-1">
+            <span
+              className={`text-sm select-none inline-block max-w-full truncate task-title ${
+                isDone ? "task-title-done text-muted font-normal" : "text-ink font-semibold"
               }`}
             >
               {task.title}
-            </p>
+            </span>
             {task.description && (
               <p
                 className={`text-xs mt-0.5 truncate ${
-                  isDone ? "text-zinc-600 line-through" : "text-zinc-400"
+                  isDone ? "text-muted opacity-70 line-through" : "text-muted"
                 }`}
               >
                 {task.description}
               </p>
             )}
+            <div className="flex flex-wrap items-center gap-2.5 mt-1 select-none">
+              <div className="flex items-center gap-1 text-[10px] font-semibold text-muted">
+                <svg className="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{formatTime(task.createdAt)}</span>
+              </div>
+              {task.dueDate && (
+                <div className={`flex items-center gap-1 text-[10px] font-bold ${isDone ? "text-muted opacity-70 line-through" : "text-primary"}`}>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span>Due: {formatDueDate(task.dueDate)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Badge & Action Buttons */}
+          <div className="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-border/50 mt-1 sm:mt-0 flex-shrink-0 w-full sm:w-auto">
+            {isConfirmingDelete ? (
+              <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
+                <span className="text-xs text-error font-semibold animate-pulse mr-1">
+                  Are you sure?
+                </span>
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-error hover:opacity-95 text-white active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {deleting ? "..." : "Delete"}
+                  </button>
+                  <button
+                    onClick={() => setIsConfirmingDelete(false)}
+                    disabled={deleting}
+                    className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-white text-muted hover:text-ink active:scale-95 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3">
+                <span
+                  className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
+                    isDone ? "text-accent" : "text-muted"
+                  }`}
+                >
+                  {isDone ? "Done" : "Todo"}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-white text-muted hover:text-ink hover:border-primary active:scale-95 transition-all cursor-pointer"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setIsConfirmingDelete(true)}
+                    className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-border bg-white text-error hover:bg-error-bg hover:border-error active:scale-95 transition-all cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-        
-        {isConfirmingDelete ? (
-          <div className="flex items-center space-x-2">
-            <span className="text-xs text-red-400 font-semibold animate-pulse mr-1">
-              Are you sure?
-            </span>
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white active:scale-95 transition-all disabled:opacity-50"
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </button>
-            <button
-              onClick={() => setIsConfirmingDelete(false)}
-              disabled={deleting}
-              className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-950/20 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition-all"
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center space-x-2">
-            <span
-              className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
-                isDone
-                  ? "bg-green-500/10 border-green-500/20 text-green-400"
-                  : "bg-blue-500/10 border-blue-500/20 text-blue-400"
-              }`}
-            >
-              {task.status}
-            </span>
-            <button
-              onClick={() => setIsEditing(true)}
-              className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-950/20 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition-all"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setIsConfirmingDelete(true)}
-              className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-red-950/30 bg-red-950/10 text-red-400 hover:text-red-300 hover:border-red-900/50 active:scale-95 transition-all"
-            >
-              Delete
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

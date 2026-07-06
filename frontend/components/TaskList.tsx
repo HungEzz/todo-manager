@@ -28,16 +28,16 @@ export default function TaskList({
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="flex items-center justify-between p-4 rounded-xl border border-zinc-800 bg-zinc-900/20 animate-pulse"
+            className="flex items-center justify-between p-4 bg-white border border-border rounded-2xl animate-pulse"
           >
             <div className="flex items-center space-x-3 w-2/3">
-              <div className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+              <div className="w-5 h-5 rounded-full bg-surface" />
               <div className="space-y-2 w-full">
-                <div className="h-4 bg-zinc-800 rounded w-1/3" />
-                <div className="h-3 bg-zinc-800 rounded w-2/3" />
+                <div className="h-4 bg-surface rounded w-1/3" />
+                <div className="h-3 bg-surface rounded w-2/3" />
               </div>
             </div>
-            <div className="h-6 bg-zinc-800 rounded-full w-16" />
+            <div className="h-6 bg-surface rounded-full w-16" />
           </div>
         ))}
       </div>
@@ -46,8 +46,8 @@ export default function TaskList({
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center bg-red-950/20 border border-red-900/30 rounded-xl space-y-4">
-        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-red-500/10 text-red-400">
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-error-bg border-l-4 border-error rounded-r-lg space-y-4">
+        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white text-error shadow-sm">
           <svg
             className="w-6 h-6"
             fill="none"
@@ -63,12 +63,12 @@ export default function TaskList({
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-bold text-red-200">Failed to load tasks</h3>
-          <p className="text-sm text-red-400 mt-1 max-w-xs">{error}</p>
+          <h3 className="text-lg font-bold text-error">Failed to load tasks</h3>
+          <p className="text-sm text-error mt-1 max-w-xs opacity-90">{error}</p>
         </div>
         <button
           onClick={onRetry}
-          className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 hover:bg-red-600 active:scale-95 transition-all text-white"
+          className="px-4 py-2 text-sm font-semibold rounded-lg bg-error hover:opacity-90 active:scale-95 transition-all text-white cursor-pointer"
         >
           Retry
         </button>
@@ -78,8 +78,8 @@ export default function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center bg-zinc-900/30 border border-zinc-800/50 rounded-xl space-y-4">
-        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-zinc-800 text-zinc-400">
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-white border border-border rounded-2xl space-y-4">
+        <div className="w-12 h-12 flex items-center justify-center rounded-full bg-surface text-muted">
           <svg
             className="w-6 h-6"
             fill="none"
@@ -95,10 +95,10 @@ export default function TaskList({
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-bold text-zinc-200">
+          <h3 className="text-lg font-bold text-ink">
             {isFiltered ? "No matching tasks found" : "No tasks found"}
           </h3>
-          <p className="text-sm text-zinc-400 mt-1 max-w-xs">
+          <p className="text-sm text-muted mt-1 max-w-xs">
             {isFiltered
               ? "No tasks match your current search or filter. Try adjusting them!"
               : "Your task list is empty. Add a new task to get started!"}

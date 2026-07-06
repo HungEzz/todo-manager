@@ -10,7 +10,8 @@ const createTaskSchema = z.object({
     .trim()
     .min(1, "Title is required and cannot be empty or only whitespace")
     .max(200, "Title cannot exceed 200 characters"),
-  description: z.string().optional(),
+  description: z.string().max(1000, "Description cannot exceed 1000 characters").optional(),
+  dueDate: z.string().datetime({ message: "Invalid date format, must be ISO-8601" }).optional().or(z.literal("")),
 });
 
 // Zod schema for validating task update request
@@ -21,7 +22,8 @@ const updateTaskSchema = z.object({
     .min(1, "Title is required and cannot be empty or only whitespace")
     .max(200, "Title cannot exceed 200 characters")
     .optional(),
-  description: z.string().optional(),
+  description: z.string().max(1000, "Description cannot exceed 1000 characters").optional(),
+  dueDate: z.string().datetime({ message: "Invalid date format, must be ISO-8601" }).optional().or(z.literal("")).nullable(),
 });
 
 // Zod schema for validating task status update request
@@ -97,6 +99,7 @@ export const getTasks = async (req: Request, res: Response, next: NextFunction) 
     return res.status(200).json({
       data: result.tasks,
       pagination: result.pagination,
+      stats: result.stats,
     });
   } catch (error) {
     next(error);

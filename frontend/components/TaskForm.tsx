@@ -11,6 +11,7 @@ interface TaskFormProps {
 export default function TaskForm({ onTaskCreated }: TaskFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [dueDate, setDueDate] = useState("");
   
   const [titleError, setTitleError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -50,11 +51,13 @@ export default function TaskForm({ onTaskCreated }: TaskFormProps) {
       const newTask = await createTask({
         title: title.trim(),
         description: description.trim() || undefined,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
       });
 
       // Reset form states on success
       setTitle("");
       setDescription("");
+      setDueDate("");
       setTitleError(null);
       
       // Notify parent to append the task
@@ -69,66 +72,102 @@ export default function TaskForm({ onTaskCreated }: TaskFormProps) {
   };
 
   const isSubmitDisabled = submitting || !!titleError || title.trim() === "";
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="p-6 rounded-2xl border border-zinc-800/80 bg-zinc-900/30 backdrop-blur-md shadow-xl space-y-4"
+      className="p-3 rounded-2xl border border-border/60 bg-surface/50 transition-all duration-200 space-y-2"
     >
-      <h2 className="text-xl font-bold text-zinc-100">Create New Task</h2>
-
       {/* Global API Submit Error */}
       {submitError && (
-        <div className="p-3 text-sm rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+        <div className="p-2.5 text-xs rounded-lg border-l-4 border-error bg-error-bg text-error">
           {submitError}
         </div>
       )}
 
-      {/* Title Field */}
-      <div className="space-y-1.5">
-        <label htmlFor="title" className="text-xs font-semibold text-zinc-400">
-          Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          id="title"
-          type="text"
-          value={title}
-          onChange={handleTitleChange}
-          placeholder="Enter task title..."
-          className={`w-full px-4 py-2.5 text-sm rounded-xl border bg-zinc-950/50 text-white placeholder-zinc-600 focus:outline-none transition-all ${
-            titleError
-              ? "border-red-500/50 focus:border-red-500"
-              : "border-zinc-800 focus:border-indigo-500"
-          }`}
-        />
-        {titleError && (
-          <p className="text-xs text-red-400 font-medium">{titleError}</p>
+      {/* Main row */}
+      <div className="flex gap-2 items-start">
+        <div className="flex-1 space-y-1">
+          <label htmlFor="title" className="sr-only">Task Title</label>
+          <input
+            id="title"
+            type="text"
+            value={title}
+            onChange={handleTitleChange}
+            onFocus={() => setIsExpanded(true)}
+            placeholder="Add a new task..."
+            className={`w-full px-2.5 py-1.5 text-xs rounded-lg border bg-white text-ink placeholder-muted focus:outline-none transition-all ${
+              titleError
+                ? "border-error focus:border-error"
+                : "border-border focus:border-primary"
+            }`}
+          />
+        </div>
+        {!isExpanded && (
+          <button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-white bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+          >
+            {submitting ? "..." : "Add"}
+          </button>
         )}
       </div>
 
-      {/* Description Field */}
-      <div className="space-y-1.5">
-        <label htmlFor="description" className="text-xs font-semibold text-zinc-400">
-          Description
-        </label>
-        <textarea
-          id="description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter detailed description (optional)..."
-          rows={3}
-          className="w-full px-4 py-2.5 text-sm rounded-xl border border-zinc-800 bg-zinc-950/50 text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition-all resize-none"
-        />
-      </div>
+      {titleError && isExpanded && (
+        <p className="text-[10px] text-error font-medium mt-0.5">{titleError}</p>
+      )}
 
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isSubmitDisabled}
-        className="w-full py-2.5 text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] transition-all"
-      >
-        {submitting ? "Processing..." : "Add Task"}
-      </button>
+      {isExpanded && (
+        <div className="pt-2 border-t border-border/60 space-y-2.5">
+          <div className="space-y-1">
+            <label htmlFor="description" className="sr-only">Description</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add description (optional)..."
+              rows={2}
+              className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-border bg-white text-ink placeholder-muted focus:outline-none focus:border-primary transition-all resize-none"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="flex-1 flex items-center gap-1.5">
+              <span className="text-muted text-[10px] font-bold select-none">Due:</span>
+              <input
+                id="dueDate"
+                type="datetime-local"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="flex-1 px-2 py-1 text-xs rounded-lg border border-border bg-white text-ink focus:outline-none focus:border-primary transition-all"
+              />
+            </div>
+
+            <div className="flex justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExpanded(false);
+                  setTitleError(null);
+                  setDueDate("");
+                }}
+                className="px-2.5 py-1 text-[11px] font-bold rounded-lg border border-border bg-white text-muted hover:text-ink transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitDisabled}
+                className="px-3.5 py-1 text-[11px] font-bold rounded-lg text-white bg-primary hover:bg-primary-dark disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] transition-all cursor-pointer"
+              >
+                {submitting ? "..." : "Add"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

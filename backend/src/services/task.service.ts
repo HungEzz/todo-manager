@@ -5,7 +5,7 @@ import prisma from "../lib/prisma";
  * Creates a new task in the database.
  * @param data Object containing title and optional description.
  */
-export const createTask = async (data: { title: string; description?: string }) => {
+export const createTask = async (data: { title: string; description?: string; dueDate?: string }) => {
   if (!data.title || data.title.trim() === "") {
     throw new Error("Title is required and cannot be empty");
   }
@@ -13,6 +13,7 @@ export const createTask = async (data: { title: string; description?: string }) 
     data: {
       title: data.title,
       description: data.description,
+      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
     },
   });
 };
@@ -45,7 +46,7 @@ export const getTasks = async (params: {
 
   const skip = (page - 1) * limit;
 
-  const [tasks, total] = await Promise.all([
+  const [tasks, total, activeCount, doneCount] = await Promise.all([
     prisma.task.findMany({
       where,
       skip,
@@ -55,6 +56,8 @@ export const getTasks = async (params: {
       },
     }),
     prisma.task.count({ where }),
+    prisma.task.count({ where: { status: "TODO" } }),
+    prisma.task.count({ where: { status: "DONE" } }),
   ]);
 
   const totalPages = Math.ceil(total / limit);
@@ -66,6 +69,10 @@ export const getTasks = async (params: {
       limit,
       total,
       totalPages,
+    },
+    stats: {
+      active: activeCount,
+      done: doneCount,
     },
   };
 };
@@ -85,7 +92,7 @@ export const getTaskById = async (id: number) => {
  * @param id The ID of the task.
  * @param data Object containing optional title and description.
  */
-export const updateTask = async (id: number, data: { title?: string; description?: string }) => {
+export const updateTask = async (id: number, data: { title?: string; description?: string; dueDate?: string | null }) => {
   const existing = await prisma.task.findUnique({
     where: { id },
   });
@@ -94,9 +101,18 @@ export const updateTask = async (id: number, data: { title?: string; description
     return null;
   }
 
+  const updateData: Prisma.TaskUpdateInput = {
+    title: data.title,
+    description: data.description,
+  };
+
+  if (data.dueDate !== undefined) {
+    updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;
+  }
+
   return await prisma.task.update({
     where: { id },
-    data,
+    data: updateData,
   });
 };
 

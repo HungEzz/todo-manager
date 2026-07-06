@@ -18,6 +18,10 @@ export interface GetTasksResponse {
     total: number;
     totalPages: number;
   };
+  stats: {
+    active: number;
+    done: number;
+  };
 }
 
 /**
@@ -46,7 +50,7 @@ export async function getTaskById(id: number): Promise<Task> {
 /**
  * Creates a new task with title and optional description.
  */
-export async function createTask(data: { title: string; description?: string }): Promise<Task> {
+export async function createTask(data: { title: string; description?: string; dueDate?: string }): Promise<Task> {
   return fetchAPI<Task>("/tasks", {
     method: "POST",
     body: JSON.stringify(data),
@@ -58,7 +62,7 @@ export async function createTask(data: { title: string; description?: string }):
  */
 export async function updateTask(
   id: number,
-  data: { title?: string; description?: string }
+  data: { title?: string; description?: string; dueDate?: string | null }
 ): Promise<Task> {
   return fetchAPI<Task>(`/tasks/${id}`, {
     method: "PUT",
@@ -68,11 +72,9 @@ export async function updateTask(
 
 /**
  * Toggles a task's status between "TODO" and "DONE".
- * Resolves the task's current status first, then pushes the update.
  */
-export async function toggleTaskStatus(id: number): Promise<Task> {
-  const task = await getTaskById(id);
-  const newStatus: TaskStatus = task.status === "TODO" ? "DONE" : "TODO";
+export async function toggleTaskStatus(id: number, currentStatus: TaskStatus): Promise<Task> {
+  const newStatus: TaskStatus = currentStatus === "TODO" ? "DONE" : "TODO";
 
   return fetchAPI<Task>(`/tasks/${id}/status`, {
     method: "PATCH",
