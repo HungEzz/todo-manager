@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Task } from "../types/task";
-import { updateTask, deleteTask } from "../lib/taskApi";
+import { Task, TaskStatus } from "../types/task";
+import { updateTask, deleteTask, toggleTaskStatus } from "../lib/taskApi";
 
 interface TaskItemProps {
   task: Task;
@@ -20,6 +20,7 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
   const [titleError, setTitleError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [toggling, setToggling] = useState(false);
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +66,38 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
       setIsConfirmingDelete(false);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleToggleStatus = async () => {
+    if (toggling) return;
+
+    setToggling(true);
+    setSubmitError(null);
+
+    const originalTask = { ...task };
+    const nextStatus: TaskStatus = task.status === "TODO" ? "DONE" : "TODO";
+    const optimisticTask: Task = {
+      ...task,
+      status: nextStatus,
+      updatedAt: new Date().toISOString(),
+    };
+
+    // 1. Optimistic Update (Immediate UI response)
+    onTaskUpdated(optimisticTask);
+
+    try {
+      // 2. Call API
+      const actualUpdatedTask = await toggleTaskStatus(task.id);
+      // 3. Sync with server data
+      onTaskUpdated(actualUpdatedTask);
+    } catch (err) {
+      // 4. Revert UI and show error on failure
+      const errorMessage = err instanceof Error ? err.message : "Failed to update task status. Please try again.";
+      setSubmitError(errorMessage);
+      onTaskUpdated(originalTask);
+    } finally {
+      setToggling(false);
     }
   };
 
@@ -158,11 +191,20 @@ export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskIte
 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3 min-w-0">
-          <span
-            className={`flex-shrink-0 w-2.5 h-2.5 rounded-full ${
-              isDone ? "bg-green-500 shadow-lg shadow-green-500/50" : "bg-blue-500 shadow-lg shadow-blue-500/50"
-            }`}
-          />
+          <button
+            onClick={handleToggleStatus}
+            disabled={toggling || isConfirmingDelete}
+            title={isDone ? "Mark as TODO" : "Mark as DONE"}
+            className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center transition-all ${
+              isDone
+                ? "bg-green-500/20 border-green-500 text-green-400 shadow-lg shadow-green-500/20"
+                : "border-zinc-700 bg-zinc-950/40 text-transparent hover:border-zinc-500"
+            } active:scale-90 disabled:opacity-50`}
+          >
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
           <div className="min-w-0">
             <p
               className={`text-sm font-semibold truncate ${
