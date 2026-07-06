@@ -54,6 +54,10 @@ export default function Home() {
     setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
   };
 
+  const handleTaskDeleted = (id: number) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-start bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 text-white font-sans py-16 px-4">
       <div className="w-full max-w-lg space-y-8">
@@ -78,6 +82,7 @@ export default function Home() {
             error={error}
             onRetry={loadTasks}
             onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
           />
         </div>
       </div>

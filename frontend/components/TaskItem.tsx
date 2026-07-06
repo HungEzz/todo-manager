@@ -1,15 +1,19 @@
 import { useState } from "react";
 import { Task } from "../types/task";
-import { updateTask } from "../lib/taskApi";
+import { updateTask, deleteTask } from "../lib/taskApi";
 
 interface TaskItemProps {
   task: Task;
   onTaskUpdated: (task: Task) => void;
+  onTaskDeleted: (id: number) => void;
 }
 
-export default function TaskItem({ task, onTaskUpdated }: TaskItemProps) {
+export default function TaskItem({ task, onTaskUpdated, onTaskDeleted }: TaskItemProps) {
   const isDone = task.status === "DONE";
   const [isEditing, setIsEditing] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const [editTitle, setEditTitle] = useState(task.title);
   const [editDescription, setEditDescription] = useState(task.description || "");
 
@@ -45,6 +49,22 @@ export default function TaskItem({ task, onTaskUpdated }: TaskItemProps) {
       setSubmitError(errorMessage);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setSubmitError(null);
+
+    try {
+      await deleteTask(task.id);
+      onTaskDeleted(task.id);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to delete the task. Please try again.";
+      setSubmitError(errorMessage);
+      setIsConfirmingDelete(false);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -123,48 +143,91 @@ export default function TaskItem({ task, onTaskUpdated }: TaskItemProps) {
   }
 
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm hover:border-zinc-700 transition-all duration-200">
-      <div className="flex items-center space-x-3 min-w-0">
-        <span
-          className={`flex-shrink-0 w-2.5 h-2.5 rounded-full ${
-            isDone ? "bg-green-500 shadow-lg shadow-green-500/50" : "bg-blue-500 shadow-lg shadow-blue-500/50"
-          }`}
-        />
-        <div className="min-w-0">
-          <p
-            className={`text-sm font-semibold truncate ${
-              isDone ? "text-zinc-500 line-through font-normal" : "text-zinc-100"
-            }`}
+    <div className="flex flex-col p-4 rounded-xl border border-zinc-800 bg-zinc-900/50 backdrop-blur-sm hover:border-zinc-700 transition-all duration-200 space-y-2">
+      {submitError && (
+        <div className="p-2.5 text-xs rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex justify-between items-center">
+          <span>{submitError}</span>
+          <button
+            onClick={() => setSubmitError(null)}
+            className="text-red-400 hover:text-white font-bold ml-2 transition-colors"
           >
-            {task.title}
-          </p>
-          {task.description && (
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3 min-w-0">
+          <span
+            className={`flex-shrink-0 w-2.5 h-2.5 rounded-full ${
+              isDone ? "bg-green-500 shadow-lg shadow-green-500/50" : "bg-blue-500 shadow-lg shadow-blue-500/50"
+            }`}
+          />
+          <div className="min-w-0">
             <p
-              className={`text-xs mt-0.5 truncate ${
-                isDone ? "text-zinc-600 line-through" : "text-zinc-400"
+              className={`text-sm font-semibold truncate ${
+                isDone ? "text-zinc-500 line-through font-normal" : "text-zinc-100"
               }`}
             >
-              {task.description}
+              {task.title}
             </p>
-          )}
+            {task.description && (
+              <p
+                className={`text-xs mt-0.5 truncate ${
+                  isDone ? "text-zinc-600 line-through" : "text-zinc-400"
+                }`}
+              >
+                {task.description}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="flex items-center space-x-2">
-        <span
-          className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
-            isDone
-              ? "bg-green-500/10 border-green-500/20 text-green-400"
-              : "bg-blue-500/10 border-blue-500/20 text-blue-400"
-          }`}
-        >
-          {task.status}
-        </span>
-        <button
-          onClick={() => setIsEditing(true)}
-          className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-950/20 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition-all"
-        >
-          Edit
-        </button>
+        
+        {isConfirmingDelete ? (
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-red-400 font-semibold animate-pulse mr-1">
+              Are you sure?
+            </span>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white active:scale-95 transition-all disabled:opacity-50"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(false)}
+              disabled={deleting}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-950/20 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center space-x-2">
+            <span
+              className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
+                isDone
+                  ? "bg-green-500/10 border-green-500/20 text-green-400"
+                  : "bg-blue-500/10 border-blue-500/20 text-blue-400"
+              }`}
+            >
+              {task.status}
+            </span>
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-zinc-800 bg-zinc-950/20 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition-all"
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(true)}
+              className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-red-950/30 bg-red-950/10 text-red-400 hover:text-red-300 hover:border-red-900/50 active:scale-95 transition-all"
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
