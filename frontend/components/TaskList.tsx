@@ -1,50 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getTasks } from "../lib/taskApi";
 import { Task } from "../types/task";
 import TaskItem from "./TaskItem";
 
-export default function TaskList() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface TaskListProps {
+  tasks: Task[];
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}
 
-  const loadTasks = () => {
-    setLoading(true);
-    setError(null);
-    getTasks()
-      .then((res) => {
-        setTasks(res.data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message || "Failed to load tasks");
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    let active = true;
-    getTasks()
-      .then((res) => {
-        if (active) {
-          setTasks(res.data);
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err.message || "Failed to load tasks");
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
+export default function TaskList({ tasks, loading, error, onRetry }: TaskListProps) {
   if (loading) {
     return (
       <div className="space-y-3">
@@ -86,14 +52,14 @@ export default function TaskList() {
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-bold text-red-200">Không thể tải danh sách</h3>
+          <h3 className="text-lg font-bold text-red-200">Failed to load tasks</h3>
           <p className="text-sm text-red-400 mt-1 max-w-xs">{error}</p>
         </div>
         <button
-          onClick={loadTasks}
+          onClick={onRetry}
           className="px-4 py-2 text-sm font-semibold rounded-lg bg-red-500 hover:bg-red-600 active:scale-95 transition-all text-white"
         >
-          Thử lại
+          Retry
         </button>
       </div>
     );
@@ -113,14 +79,14 @@ export default function TaskList() {
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
             />
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-bold text-zinc-200">Danh sách trống</h3>
+          <h3 className="text-lg font-bold text-zinc-200">No tasks found</h3>
           <p className="text-sm text-zinc-400 mt-1 max-w-xs">
-            Bạn chưa có công việc nào. Hãy thêm một công việc mới để bắt đầu ngày làm việc hiệu quả!
+            Your task list is empty. Add a new task to get started!
           </p>
         </div>
       </div>
