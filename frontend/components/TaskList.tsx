@@ -8,9 +8,10 @@ interface TaskListProps {
   loading: boolean;
   error: string | null;
   onRetry: () => void;
+  onTaskUpdated: (task: Task) => void;
 }
 
-export default function TaskList({ tasks, loading, error, onRetry }: TaskListProps) {
+export default function TaskList({ tasks, loading, error, onRetry, onTaskUpdated }: TaskListProps) {
   if (loading) {
     return (
       <div className="space-y-3">
@@ -96,7 +97,7 @@ export default function TaskList({ tasks, loading, error, onRetry }: TaskListPro
   return (
     <div className="space-y-3">
       {tasks.map((task) => (
-        <TaskItem key={task.id} task={task} />
+        <TaskItem key={task.id} task={task} onTaskUpdated={onTaskUpdated} />
       ))}
     </div>
   );
